@@ -55,16 +55,14 @@ class EmailLogger
 	 */
 	protected function saveAttachments(Email $message): ?string
 	{
-		// @DEBT
-		$reflectionProperty = new \ReflectionProperty(Email::class, 'attachments');
-    $reflectionProperty->setAccessible(true);
-
-    $attachments = $reflectionProperty->getValue($message);
-
 		if (empty($message->getAttachments())) {
 			return null;
 		}
 
-		return json_encode($attachments);
+		return collect($message->getAttachments())
+			// do not save media attachments
+			->filter(fn(DataPart $part) => str_contains($part->getMediaType(), 'text'))
+			->map(fn(DataPart $part) => $part->toString())
+			->implode("\n\n");
 	}
 }
